@@ -2,6 +2,7 @@ import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -64,15 +65,59 @@ public class Wrapper_gjdairtu001 implements QunarCrawler {
 
 	@Override
 	public BookingResult getBookingInfo(FlightSearchParam arg0) {
-		String bookingUrlPre = "http://wftc2.e-travel.com/plnext/tunisair/Fare.action;jsessionid=wV2Kip6XrM1faV8N80KlTioDtuFO4agebs-LU9rEdW-7Sa_nLWkw!193673219!-1819211208";
-		
-		
-		
+		String bookingUrlPre = "http://www.tunisair.com/site/publish/module/reservationFlex_frame.asp";
+
 		BookingResult bookingResult = new BookingResult();
 		BookingInfo bookingInfo = new BookingInfo();
-		//bookingInfo.setAction(action);
-		
-		return null;
+		bookingInfo.setAction(bookingUrlPre);
+		bookingInfo.setMethod("post");
+		Map<String, String> map = new TreeMap<String, String>();
+
+		String[] dateStrings = arg0.getDepDate().split("-");
+		String fullDate = dateStrings[2] + "/" + dateStrings[1] + "/"
+				+ dateStrings[0];
+
+		map.put("TRIP_TYPE", "O");
+		map.put("B_LOCATION_1", arg0.getDep());
+		map.put("E_LOCATION_1", arg0.getArr());
+		map.put("DEBUT", fullDate);
+		map.put("FIN", fullDate);
+		map.put("ADTPAX", "1");
+		map.put("YTHPAX", "0");
+		map.put("CHDPAX", "0");
+		map.put("InfantPAX", "0");
+		map.put("EMBEDDED_TRANSACTION", "FlexPricerAvailability");
+		map.put("LANGUAGE", "GB");
+		map.put("SITE", "BASXBASX");
+		map.put("TRIP_FLOW", "YES");
+		map.put("SEVEN_DAY_SEARCH", "TRUE");
+		map.put("B_ANY_TIME_1", "TRUE");
+		map.put("PRICING_TYPE", "O");
+		map.put("DISPLAY_TYPE", "1");
+		map.put("DATE_RANGE_VALUE_1", "4");
+		map.put("DATE_RANGE_VALUE_2", "4");
+		map.put("COMMERCIAL_FARE_FAMILY_1", "WWCFF");
+		map.put("DATE_RANGE_QUALIFIER_1", "C");
+		map.put("DATE_RANGE_QUALIFIER_2", "C");
+		map.put("SO_SITE_FD_DISPLAY_MODE", "0");
+		map.put("SO_SITE_ALLOW_SPECIAL_MEAL", "FALSE");
+		map.put("SO_SITE_AVAIL_SERVICE_FEE", "TRUE");
+		map.put("SO_SITE_ALLOW_DATA_TRANS_EXT", "TRUE");
+		map.put("B_DATE_1", "");
+		map.put("B_DATE_2", "");
+		map.put("B_ANY_TIME_2", "TRUE");
+		map.put("SEARCH_BY", "1");
+		map.put("AIRLINE_1_1", "TU");
+		map.put("EXTERNAL_ID", "FLEX-IBE-EN");
+		map.put("DESTINATION_PAGE",
+				"https://wftc2.e-travel.com/plnext/tunisair/Override.action");
+		map.put("paiement", "BANQUE");
+		map.put("x", "55");
+		map.put("y", "10");
+		bookingInfo.setInputs(map);
+		bookingResult.setData(bookingInfo);
+		bookingResult.setRet(true);
+		return bookingResult;
 	}
 
 	private static String getHtmlF(FlightSearchParam arg0) {
