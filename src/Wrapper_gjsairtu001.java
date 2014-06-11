@@ -1,11 +1,18 @@
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.TreeMap;
+
+import javax.xml.crypto.Data;
 
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.lang.StringUtils;
@@ -20,41 +27,44 @@ import com.qunar.qfwrapper.bean.search.FlightSearchParam;
 import com.qunar.qfwrapper.bean.search.FlightSegement;
 import com.qunar.qfwrapper.bean.search.OneWayFlightInfo;
 import com.qunar.qfwrapper.bean.search.ProcessResultInfo;
+import com.qunar.qfwrapper.bean.search.RoundTripFlightInfo;
 import com.qunar.qfwrapper.constants.Constants;
 import com.qunar.qfwrapper.interfaces.QunarCrawler;
 import com.qunar.qfwrapper.util.QFHttpClient;
 import com.qunar.qfwrapper.util.QFPostMethod;
 
-public class Wrapper_gjdairtu001 implements QunarCrawler {
+public class Wrapper_gjsairtu001 implements QunarCrawler {
 	public static void main(String[] args) throws FileNotFoundException {
 		FlightSearchParam searchParam = new FlightSearchParam();
 		searchParam.setDep("TUN");
-		searchParam.setArr("CAI");
-		searchParam.setDepDate("2014-07-28");
+		searchParam.setArr("TIP");
+		searchParam.setDepDate("2014-06-13");
+		searchParam.setRetDate("2014-06-16");
 		searchParam.setTimeOut("600000");
 		searchParam.setToken("");
 
 		System.out.println(searchParam);
 
-		String code = new Wrapper_gjdairtu001().getHtml(searchParam);
+		String code = new Wrapper_gjsairtu001().getHtml(searchParam);
+
+		// System.out.println(code);
 
 		// PrintWriter pw = new PrintWriter(new File("test.txt"));
 		// pw.print(code);
 		// pw.close();
 
-		// String code = "";
-		// Scanner cin = new Scanner(new File("test.txt"));
-		// while (cin.hasNextLine()) {
-		// String line = cin.nextLine();
-		// code = code + line;
-		// }
+		/*
+		 * StringBuilder sb = new StringBuilder(); Scanner cin = new Scanner(new
+		 * File("test.txt")); while (cin.hasNextLine()) {
+		 * sb.append(cin.nextLine()); } String code = sb.toString();
+		 */
 
 		ProcessResultInfo result = new ProcessResultInfo();
-		result = new Wrapper_gjdairtu001().process(code, searchParam);
+		result = new Wrapper_gjsairtu001().process(code, searchParam);
 		if (result.isRet() && result.getStatus().equals(Constants.SUCCESS)) {
-			List<OneWayFlightInfo> flightList = (List<OneWayFlightInfo>) result
+			List<RoundTripFlightInfo> flightList = (List<RoundTripFlightInfo>) result
 					.getData();
-			for (OneWayFlightInfo in : flightList) {
+			for (RoundTripFlightInfo in : flightList) {
 				System.out.println("************" + in.getInfo().toString());
 				System.out.println("++++++++++++" + in.getDetail().toString());
 			}
@@ -77,11 +87,15 @@ public class Wrapper_gjdairtu001 implements QunarCrawler {
 		String fullDate = dateStrings[2] + "/" + dateStrings[1] + "/"
 				+ dateStrings[0];
 
-		map.put("TRIP_TYPE", "O");
+		String[] retDateStrings = arg0.getRetDate().split("-");
+		String retFullDate = retDateStrings[2] + "/" + retDateStrings[1] + "/"
+				+ retDateStrings[0];
+
+		map.put("TRIP_TYPE", "R");
 		map.put("B_LOCATION_1", arg0.getDep());
 		map.put("E_LOCATION_1", arg0.getArr());
 		map.put("DEBUT", fullDate);
-		map.put("FIN", fullDate);
+		map.put("FIN", retFullDate);
 		map.put("ADTPAX", "1");
 		map.put("YTHPAX", "0");
 		map.put("CHDPAX", "0");
@@ -112,7 +126,7 @@ public class Wrapper_gjdairtu001 implements QunarCrawler {
 		map.put("DESTINATION_PAGE",
 				"https://wftc2.e-travel.com/plnext/tunisair/Override.action");
 		map.put("paiement", "BANQUE");
-		map.put("x", "55");
+		map.put("x", "66");
 		map.put("y", "10");
 		map.put("lang", "en");
 		bookingInfo.setInputs(map);
@@ -130,14 +144,13 @@ public class Wrapper_gjdairtu001 implements QunarCrawler {
 			// year -- dateStrings[0]
 			// month -- dateStrings[1]
 			// day -- dateStrings[2]
-			String dateStringFull = dateStrings[0] + dateStrings[1]
-					+ dateStrings[2] + "0000";
+			String[] retDateStrings = arg0.getRetDate().split("-");
 
 			String postUrl = String
-					.format("http://www.tunisair.com/site/publish/module/reservationFlex_frame.asp?TRIP_TYPE=O&B_LOCATION_1=%s&E_LOCATION_1=%s&DEBUT=%s%%2F%s%%2F%s&FIN=%s%%2F%s%%2F%s&ADTPAX=1&YTHPAX=0&CHDPAX=0&InfantPAX=0&EMBEDDED_TRANSACTION=FlexPricerAvailability&LANGUAGE=GB&SITE=BASXBASX&TRIP_FLOW=YES&SEVEN_DAY_SEARCH=TRUE&B_ANY_TIME_1=TRUE&PRICING_TYPE=O&DISPLAY_TYPE=1&DATE_RANGE_VALUE_1=4&DATE_RANGE_VALUE_2=4&COMMERCIAL_FARE_FAMILY_1=WWCFF&DATE_RANGE_QUALIFIER_1=C&DATE_RANGE_QUALIFIER_2=C&SO_SITE_FD_DISPLAY_MODE=0&SO_SITE_ALLOW_SPECIAL_MEAL=FALSE&SO_SITE_AVAIL_SERVICE_FEE=TRUE&SO_SITE_ALLOW_DATA_TRANS_EXT=TRUE&B_DATE_1=&B_DATE_2=&B_ANY_TIME_2=TRUE&SEARCH_BY=1&AIRLINE_1_1=TU&EXTERNAL_ID=FLEX-IBE-EN&DESTINATION_PAGE=https%%3A%%2F%%2Fwftc2.e-travel.com%%2Fplnext%%2Ftunisair%%2FOverride.action&paiement=BANQUE&x=34&y=13",
+					.format("http://www.tunisair.com/site/publish/module/reservationFlex_frame.asp?TRIP_TYPE=R&B_LOCATION_1=%s&E_LOCATION_1=%s&DEBUT=%s%%2F%s%%2F%s&FIN=%s%%2F%s%%2F%s&ADTPAX=1&YTHPAX=0&CHDPAX=0&InfantPAX=0&EMBEDDED_TRANSACTION=FlexPricerAvailability&LANGUAGE=GB&SITE=BASXBASX&TRIP_FLOW=YES&SEVEN_DAY_SEARCH=TRUE&B_ANY_TIME_1=TRUE&PRICING_TYPE=O&DISPLAY_TYPE=1&DATE_RANGE_VALUE_1=4&DATE_RANGE_VALUE_2=4&COMMERCIAL_FARE_FAMILY_1=WWCFF&DATE_RANGE_QUALIFIER_1=C&DATE_RANGE_QUALIFIER_2=C&SO_SITE_FD_DISPLAY_MODE=0&SO_SITE_ALLOW_SPECIAL_MEAL=FALSE&SO_SITE_AVAIL_SERVICE_FEE=TRUE&SO_SITE_ALLOW_DATA_TRANS_EXT=TRUE&B_DATE_1=&B_DATE_2=&B_ANY_TIME_2=TRUE&SEARCH_BY=1&AIRLINE_1_1=TU&EXTERNAL_ID=FLEX-IBE-EN&DESTINATION_PAGE=https%%3A%%2F%%2Fwftc2.e-travel.com%%2Fplnext%%2Ftunisair%%2FOverride.action&paiement=BANQUE&x=18&y=8",
 							arg0.getDep(), arg0.getArr(), dateStrings[2],
-							dateStrings[1], dateStrings[0], dateStrings[2],
-							dateStrings[1], dateStrings[0]);
+							dateStrings[1], dateStrings[0], retDateStrings[2],
+							retDateStrings[1], retDateStrings[0]);
 
 			postMethod = new QFPostMethod(postUrl);
 			int status = httpClient.executeMethod(postMethod);
@@ -163,17 +176,21 @@ public class Wrapper_gjdairtu001 implements QunarCrawler {
 			// year -- dateStrings[0]
 			// month -- dateStrings[1]
 			// day -- dateStrings[2]
+			String[] retDateStrings = arg0.getRetDate().split("-");
+
 			String dateStringFull = dateStrings[0] + dateStrings[1]
 					+ dateStrings[2] + "0000";
+			String retDateStringFull = retDateStrings[0] + retDateStrings[1]
+					+ retDateStrings[2] + "0000";
 
 			String postUrl = String
-					.format("http://wftc2.e-travel.com/plnext/tunisair/Override.action?B_LOCATION_1=%s&E_LOCATION_1=%s&TRIP_TYPE=O&B_Day=%s&B_Month=%s&B_YEAR=%s&B_TIME=0000&dcd1=&E_DAY=%s&E_MONTH=%s&E_YEAR=%s&E_TIME=0000&dcd2=&EMBEDDED_TRANSACTION=FlexPricerAvailability&LANGUAGE=GB&SITE=BASXBASX&TRIP_FLOW=YES&B_ANY_TIME_1=TRUE&B_DATE_1=%s&B_DATE_2=%s&B_ANY_TIME_2=TRUE&CORPORATE_CODE=&CORPORATE_TYPE=&AIRLINE_1_1=TU&AIRLINE_2_1=&EXTERNAL_ID=FLEX-IBE-EN&SESSION_ID=&SO_GL=%%3C%%3Fxml+version%%3D%%221.0%%22+encoding%%3D%%22iso-8859-1%%22%%3F%%3E%%3CSO_GL%%3E%%3CGLOBAL_LIST+mode%%3D%%22partial%%22%%3E%%3CNAME%%3ESITE_SITE_FARE_COMMANDS_AND_OPTIONS%%3C%%2FNAME%%3E%%3CLIST_ELEMENT%%3E%%3CCODE%%3E104%%3C%%2FCODE%%3E%%3CLIST_VALUE%%3E0%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E2%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E4%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E0%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3C%%2FLIST_ELEMENT%%3E%%3C%%2FGLOBAL_LIST%%3E%%3C%%2FSO_GL%%3E&SEARCH_BY=1&DESTINATION_PAGE=http%%3A%%2F%%2Fwftc2.e-travel.com%%2Fplnext%%2Ftunisair%%2FOverride.action&ADTPAX=1&YTHPAX=0&CHDPAX=0&InfantPAX=0&PRICING_TYPE=O&DISPLAY_TYPE=1&DATE_RANGE_VALUE_1=4&DATE_RANGE_VALUE_2=4&COMMERCIAL_FARE_FAMILY_1=WWCFF&DATE_RANGE_QUALIFIER_1=C&DATE_RANGE_QUALIFIER_2=C&SO_SITE_FD_DISPLAY_MODE=0&SO_SITE_ALLOW_SPECIAL_MEAL=FALSE&SO_SITE_AVAIL_SERVICE_FEE=TRUE&SO_SITE_CURRENCY_FORMAT_JAVA=0.000&SO_SITE_ALLOW_DATA_TRANS_EXT=True&DIRECT_NON_STOP=TRUE&SO_SITE_OFFICE_ID="
+					.format("http://wftc2.e-travel.com/plnext/tunisair/Override.action?B_LOCATION_1=%s&E_LOCATION_1=%s&TRIP_TYPE=R&B_Day=%s&B_Month=%s&B_YEAR=%s&B_TIME=0000&dcd1=&E_DAY=%s&E_MONTH=%s&E_YEAR=%s&E_TIME=0000&dcd2=&EMBEDDED_TRANSACTION=FlexPricerAvailability&LANGUAGE=GB&SITE=BASXBASX&TRIP_FLOW=YES&B_ANY_TIME_1=TRUE&B_DATE_1=201407280000&B_DATE_2=201407310000&B_ANY_TIME_2=TRUE&CORPORATE_CODE=&CORPORATE_TYPE=&AIRLINE_1_1=TU&AIRLINE_2_1=&EXTERNAL_ID=FLEX-IBE-EN&SESSION_ID=&SO_GL=%%3C%%3Fxml+version%%3D%%221.0%%22+encoding%%3D%%22iso-8859-1%%22%%3F%%3E%%3CSO_GL%%3E%%3CGLOBAL_LIST+mode%%3D%%22partial%%22%%3E%%3CNAME%%3ESITE_SITE_FARE_COMMANDS_AND_OPTIONS%%3C%%2FNAME%%3E%%3CLIST_ELEMENT%%3E%%3CCODE%%3E104%%3C%%2FCODE%%3E%%3CLIST_VALUE%%3E0%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E2%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E4%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E0%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3CLIST_VALUE%%3E%%3C%%2FLIST_VALUE%%3E%%3C%%2FLIST_ELEMENT%%3E%%3C%%2FGLOBAL_LIST%%3E%%3C%%2FSO_GL%%3E&SEARCH_BY=1&DESTINATION_PAGE=http%%3A%%2F%%2Fwftc2.e-travel.com%%2Fplnext%%2Ftunisair%%2FOverride.action&ADTPAX=1&YTHPAX=0&CHDPAX=0&InfantPAX=0&PRICING_TYPE=O&DISPLAY_TYPE=1&DATE_RANGE_VALUE_1=4&DATE_RANGE_VALUE_2=4&COMMERCIAL_FARE_FAMILY_1=WWCFF&DATE_RANGE_QUALIFIER_1=C&DATE_RANGE_QUALIFIER_2=C&SO_SITE_FD_DISPLAY_MODE=0&SO_SITE_ALLOW_SPECIAL_MEAL=FALSE&SO_SITE_AVAIL_SERVICE_FEE=TRUE&SO_SITE_CURRENCY_FORMAT_JAVA=0.000&SO_SITE_ALLOW_DATA_TRANS_EXT=True&DIRECT_NON_STOP=TRUE&SO_SITE_OFFICE_ID="
 							+ OFFICE_ID
 							+ "&SO_SITE_MOP_EXT=TRUE&SO_SITE_MOP_CALL_ME=FALSE&SO_SITE_DATA_TRANSFER=FALSE&SO_SITE_BOOL_ISSUE_ETKT=TRUE&SO_SITE_USER_CURRENCY_CODE=TND&SO_SITE_EXT_PSPURL=https%%3A%%2F%%2Fwww.smt-sps.com.tn%%2FClickToPay%%2Findex.aspx&SO_SITE_MINIMAL_TIME=H6&TRAVELLER_TYPE_1=ADT",
 							arg0.getDep(), arg0.getArr(), dateStrings[2],
-							dateStrings[1], dateStrings[0], dateStrings[2],
-							dateStrings[1], dateStrings[0], dateStringFull,
-							dateStringFull);
+							dateStrings[1], dateStrings[0], retDateStrings[2],
+							retDateStrings[1], retDateStrings[0],
+							dateStringFull, retDateStringFull);
 
 			postMethod = new QFPostMethod(postUrl);
 			int status = httpClient.executeMethod(postMethod);
@@ -243,7 +260,7 @@ public class Wrapper_gjdairtu001 implements QunarCrawler {
 	private static final NameValuePair POST_FORMS_CORPORATE_TYPE = new NameValuePair(
 			"CORPORATE_TYPE", "");
 	private static final NameValuePair POST_FORMS_TRIP_TYPE = new NameValuePair(
-			"TRIP_TYPE", "O");
+			"TRIP_TYPE", "R");
 	private static final NameValuePair POST_FORMS_EXTERNAL_ID = new NameValuePair(
 			"EXTERNAL_ID", "FLEX-IBE-EN");
 	private static final NameValuePair POST_FORMS_COMMERCIAL_FARE_FAMILY_1 = new NameValuePair(
@@ -307,8 +324,12 @@ public class Wrapper_gjdairtu001 implements QunarCrawler {
 			// year -- dateStrings[0]
 			// month -- dateStrings[1]
 			// day -- dateStrings[2]
+			String[] retDateStrings = arg0.getRetDate().split("-");
+
 			String dateStringFull = dateStrings[0] + dateStrings[1]
 					+ dateStrings[2] + "0000";
+			String retDateStringFull = retDateStrings[0] + retDateStrings[1]
+					+ retDateStrings[2] + "0000";
 
 			NameValuePair[] forms = { POST_FORMS_YTHPAX,
 					new NameValuePair("B_YEAR", dateStrings[0]),
@@ -318,24 +339,24 @@ public class Wrapper_gjdairtu001 implements QunarCrawler {
 					POST_FORMS_DATE_RANGE_VALUE_1, POST_FORMS_CORPORATE_CODE,
 					new NameValuePair("E_LOCATION_1", arg0.getArr()),
 					POST_FORMS_TRAVELLER_TYPE_1, POST_FORMS_SEARCH_BY,
-					new NameValuePair("E_MONTH", dateStrings[1]),
+					new NameValuePair("E_MONTH", retDateStrings[1]),
 					POST_FORMS_B_TIME, POST_FORMS_DATE_RANGE_QUALIFIER_1,
 					POST_FORMS_DATE_RANGE_QUALIFIER_2,
 					new NameValuePair("B_Day", dateStrings[2]),
 					new NameValuePair("B_DATE_1", dateStringFull),
 					POST_FORMS_DESTINATION_PAGE,
-					new NameValuePair("B_DATE_2", dateStringFull),
+					new NameValuePair("B_DATE_2", retDateStringFull),
 					POST_FORMS_B_ANY_TIME_1, POST_FORMS_E_TIME,
 					new NameValuePair("SESSION_ID", ""),
 					POST_FORMS_B_ANY_TIME_2, POST_FORMS_AIRLINE_1_1,
 					POST_FORMS_AIRLINE_2_1, POST_FORMS_CHDPAX, POST_FORMS_SITE,
 					POST_FORMS_DISPLAY_TYPE,
-					new NameValuePair("E_YEAR", dateStrings[0]),
+					new NameValuePair("E_YEAR", retDateStrings[0]),
 					POST_FORMS_TRIP_FLOW, POST_FORMS_CORPORATE_TYPE,
 					POST_FORMS_TRIP_TYPE, POST_FORMS_EXTERNAL_ID,
 					new NameValuePair("OFFICE_ID", OFFICE_ID),
 					new NameValuePair("B_Month", dateStrings[1]),
-					new NameValuePair("E_DAY", dateStrings[2]),
+					new NameValuePair("E_DAY", retDateStrings[2]),
 					POST_FORMS_COMMERCIAL_FARE_FAMILY_1,
 					POST_FORMS_PRICING_TYPE, POST_FORMS_LANGUAGE,
 					POST_FORMS_ADTPAX, POST_FORMS_InfantPAX, POST_FORMS_dcd1,
@@ -385,124 +406,223 @@ public class Wrapper_gjdairtu001 implements QunarCrawler {
 		// System.out.println(jsonStr);
 
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+		Map<String, FlightSegement> flightSegInfo = new HashMap<String, FlightSegement>();
 
 		try {
 			JSONObject rootJson = JSON.parseObject(jsonStr);
+			JSONObject listTabJson = rootJson.getJSONObject("list_tab");
+			JSONArray listProposedBoundJson = listTabJson
+					.getJSONArray("list_proposed_bound");
+			for (int i = 0; i < listProposedBoundJson.size(); i++) {
+				JSONObject listProposedBoundObj = listProposedBoundJson
+						.getJSONObject(i);
+				JSONArray listFlightJson = listProposedBoundObj
+						.getJSONArray("list_flight");
+				for (int j = 0; j < listFlightJson.size(); j++) {
+					JSONObject flightJson = listFlightJson.getJSONObject(j);
+					JSONArray listSegmentJson = flightJson
+							.getJSONArray("list_segment");
+					for (int k = 0; k < listSegmentJson.size(); k++) {
+						JSONObject segJson = listSegmentJson.getJSONObject(k);
 
-			JSONArray listRecommendationJson = rootJson.getJSONObject(
-					"list_tab").getJSONArray("list_recommendation");
+						String airLineCode = segJson.getJSONObject("airline")
+								.getString("code");
+						String flightNumber = segJson
+								.getString("flight_number");
 
-			Map<String, Double> flightLowestCost = new TreeMap<String, Double>();
-			Map<String, String> currency = new TreeMap<String, String>();
-			Map<String, Double> flightTaxCost = new TreeMap<String, Double>();
-			Map<String, Double> flightPriceCost = new TreeMap<String, Double>();
+						// System.out.println(airLineCode+flightNumber);
+
+						FlightSegement seg = new FlightSegement();
+						seg.setFlightno(airLineCode + flightNumber);
+						seg.setDepDate(dateFormater(segJson
+								.getString("b_date_date")));
+						seg.setDepairport(segJson.getJSONObject("b_location")
+								.getString("location_code"));
+						seg.setDeptime(segJson
+								.getString("b_date_formatted_time"));
+
+						seg.setArrDate(dateFormater(segJson
+								.getString("e_date_date")));
+						seg.setArrairport(segJson.getJSONObject("e_location")
+								.getString("location_code"));
+						seg.setArrtime(segJson
+								.getString("e_date_formatted_time"));
+
+						flightSegInfo.put(flightNumber, seg);
+					}
+				}
+			}
+
+			JSONArray listRecommendationJson = listTabJson
+					.getJSONArray("list_recommendation");
+			int cnt = 0;
+
+			Map<String, Double> lowestPrice = new HashMap<String, Double>();
+			Map<String, Double> amountWithoutTax = new HashMap<String, Double>();
+
+			Map<String, Double> flightAPrice = new HashMap<String, Double>();
+			Map<String, Double> flightBPrice = new HashMap<String, Double>();
+
+			Map<String, Double> flightAWithoutPrice = new HashMap<String, Double>();
+			Map<String, Double> flightBWithoutPrice = new HashMap<String, Double>();
+
+			Map<String, Double> flightATax = new HashMap<String, Double>();
+			Map<String, Double> flightBTax = new HashMap<String, Double>();
+
+			Map<String, String> flightACur = new HashMap<String, String>();
+			Map<String, String> flightBCur = new HashMap<String, String>();
 
 			for (int i = 0; i < listRecommendationJson.size(); i++) {
-				JSONObject fareTypeJson = listRecommendationJson
+				JSONObject listRecommendationObj = listRecommendationJson
 						.getJSONObject(i);
-				JSONObject priceJson = fareTypeJson.getJSONArray(
-						"list_trip_price").getJSONObject(0);
+				JSONArray listBoundJson = listRecommendationObj
+						.getJSONArray("list_bound");
 
-				String monetaryunit = priceJson.getJSONObject("currency")
-						.getString("code");
+				Double priceNow = listRecommendationObj.getDouble("price");
+				// System.out.println(priceNow);
 
-				Double totPrice = fareTypeJson.getDouble("price");
-				Double priceWithoutTaxDouble = priceJson
+				JSONArray listTripPrice = listRecommendationObj
+						.getJSONArray("list_trip_price");
+				JSONObject listTripPriceObj = listTripPrice.getJSONObject(0);
+
+				Double priceWithOutTax = listTripPriceObj
 						.getDouble("amount_without_tax_float");
-				Double taxDouble = totPrice - priceWithoutTaxDouble;
 
-				JSONArray avaArray = fareTypeJson.getJSONArray("list_bound")
-						.getJSONObject(0).getJSONArray("list_flight");
-				for (int j = 0; j < avaArray.size(); j++) {
-					JSONObject flight = avaArray.getJSONObject(j);
-					String flightId = flight.getString("flight_id");
-					// System.out.println(flightId);
-					if (flightLowestCost.containsKey(flightId)) {
-						Double cost = flightLowestCost.get(flightId);
-						if (cost > totPrice) {
-							flightLowestCost.put(flightId, totPrice);
-							currency.put(flightId, monetaryunit);
-							flightTaxCost.put(flightId, taxDouble);
-							flightPriceCost
-									.put(flightId, priceWithoutTaxDouble);
+				JSONArray listBoundPriceJson = listTripPriceObj
+						.getJSONArray("list_bound_price");
+				Double flightAPriceWithoutNow = listBoundPriceJson
+						.getJSONObject(0).getDouble("amount_without_tax_float");
+				Double flightBPriceWithoutNow = listBoundPriceJson
+						.getJSONObject(1).getDouble("amount_without_tax_float");
+
+				String currencyANow = listBoundPriceJson.getJSONObject(0)
+						.getJSONObject("currency").getString("code");
+				String currencyBNow = listBoundPriceJson.getJSONObject(1)
+						.getJSONObject("currency").getString("code");
+
+				JSONArray listPriceJson = listRecommendationObj
+						.getJSONArray("list_price");
+				Double flightAPriceNow = listPriceJson.getJSONObject(0)
+						.getDouble("price");
+				Double flightBPriceNow = listPriceJson.getJSONObject(1)
+						.getDouble("price");
+
+				Double flightATaxNow = flightAPriceNow - flightAPriceWithoutNow;
+				Double flightBTaxNow = flightBPriceNow - flightBPriceWithoutNow;
+
+				JSONObject listBoundObj0 = listBoundJson.getJSONObject(0);
+				JSONArray listFlightJson0 = listBoundObj0
+						.getJSONArray("list_flight");
+
+				JSONObject listBoundObj1 = listBoundJson.getJSONObject(1);
+				JSONArray listFlightJson1 = listBoundObj1
+						.getJSONArray("list_flight");
+
+				for (int j = 0; j < listFlightJson0.size(); j++) {
+					JSONObject flightJson0 = listFlightJson0.getJSONObject(j);
+					for (int k = 0; k < listFlightJson1.size(); k++) {
+						JSONObject flightJson1 = listFlightJson1
+								.getJSONObject(k);
+						String combineName = flightJson0.getJSONObject(
+								"lsa_debug_info").getString(
+								"first_flight_number")
+								+ ","
+								+ flightJson1.getJSONObject("lsa_debug_info")
+										.getString("first_flight_number");
+
+						if (lowestPrice.containsKey(combineName)) {
+							Double lPrice = lowestPrice.get(combineName);
+							if (lPrice > priceNow) {
+								lowestPrice.put(combineName, priceNow);
+								amountWithoutTax.put(combineName,
+										priceWithOutTax);
+								flightAPrice.put(combineName, flightAPriceNow);
+								flightBPrice.put(combineName, flightBPriceNow);
+								flightAWithoutPrice.put(combineName,
+										flightAPriceWithoutNow);
+								flightBWithoutPrice.put(combineName,
+										flightBPriceWithoutNow);
+								flightATax.put(combineName, flightATaxNow);
+								flightBTax.put(combineName, flightBTaxNow);
+								flightACur.put(combineName, currencyANow);
+								flightBCur.put(combineName, currencyBNow);
+							}
+						} else {
+							lowestPrice.put(combineName, priceNow);
+							amountWithoutTax.put(combineName, priceWithOutTax);
+							flightAPrice.put(combineName, flightAPriceNow);
+							flightBPrice.put(combineName, flightBPriceNow);
+							flightAWithoutPrice.put(combineName,
+									flightAPriceWithoutNow);
+							flightBWithoutPrice.put(combineName,
+									flightBPriceWithoutNow);
+							flightATax.put(combineName, flightATaxNow);
+							flightBTax.put(combineName, flightBTaxNow);
+							flightACur.put(combineName, currencyANow);
+							flightBCur.put(combineName, currencyBNow);
 						}
-					} else {
-						flightLowestCost.put(flightId, totPrice);
-						currency.put(flightId, monetaryunit);
-						flightTaxCost.put(flightId, taxDouble);
-						flightPriceCost.put(flightId, priceWithoutTaxDouble);
 					}
 				}
 			}
 
-			List<OneWayFlightInfo> flightList = new ArrayList<OneWayFlightInfo>();
-			JSONArray listFlightJsonArray = rootJson.getJSONObject("list_tab")
-					.getJSONArray("list_proposed_bound").getJSONObject(0)
-					.getJSONArray("list_flight");
+			List<RoundTripFlightInfo> flightList = new ArrayList<RoundTripFlightInfo>();
 
-			for (int i = 0; i < listFlightJsonArray.size(); i++) {
-				OneWayFlightInfo flight = new OneWayFlightInfo();
+			for (Entry<String, Double> iter : lowestPrice.entrySet()) {
+				String flightAId = iter.getKey().split(",")[0];
+				String flightBId = iter.getKey().split(",")[1];
+
+				RoundTripFlightInfo flightInfo = new RoundTripFlightInfo();
+
+				FlightSegement segA = flightSegInfo.get(flightAId);
+				FlightSegement segB = flightSegInfo.get(flightBId);
+
 				List<FlightSegement> segs = new ArrayList<FlightSegement>();
+				segs.add(segA);
+				List<FlightSegement> segsRet = new ArrayList<FlightSegement>();
+				segsRet.add(segB);
+
 				FlightDetail flightDetail = new FlightDetail();
-
-				List<String> flightNoList = new ArrayList<String>();
-
-				JSONObject flightJson = listFlightJsonArray.getJSONObject(i);
-				JSONArray flightSeg = flightJson.getJSONArray("list_segment");
-
-				Date depDate = null;
-
-				for (int j = 0; j < flightSeg.size(); j++) {
-					JSONObject segJson = flightSeg.getJSONObject(j);
-
-					String airLineCode = segJson.getJSONObject("airline")
-							.getString("code");
-					String flightNumber = segJson.getString("flight_number");
-					flightNoList.add(airLineCode + flightNumber);
-
-					FlightSegement seg = new FlightSegement();
-					seg.setFlightno(airLineCode + flightNumber);
-					seg.setDepDate(dateFormater(segJson
-							.getString("b_date_date")));
-					seg.setDepairport(segJson.getJSONObject("b_location")
-							.getString("location_code"));
-					seg.setDeptime(segJson.getString("b_date_formatted_time"));
-
-					seg.setArrDate(dateFormater(segJson
-							.getString("e_date_date")));
-					seg.setArrairport(segJson.getJSONObject("e_location")
-							.getString("location_code"));
-					seg.setArrtime(segJson.getString("e_date_formatted_time"));
-
-					segs.add(seg);
-					// System.out.println(seg);
-
-					Date tmpDate = dateFormat.parse(seg.getDepDate() + " "
-							+ seg.getDeptime());
-					if (depDate == null
-							|| tmpDate.getTime() < depDate.getTime()) {
-						depDate = tmpDate;
-					}
-				}
-
-				flightDetail.setDepdate(depDate);
-				flightDetail.setDepcity(param.getDep());
 				flightDetail.setArrcity(param.getArr());
-				flightDetail.setFlightno(flightNoList);
-				String flightId = flightJson.getString("flight_id");
-				flightDetail.setMonetaryunit(currency.get(flightId));
-				flightDetail.setTax(flightTaxCost.get(flightId));
-				flightDetail.setPrice(flightPriceCost.get(flightId));
+				flightDetail.setDepcity(param.getDep());
 
+				Date tmpDate = dateFormat.parse(segA.getDepDate() + " "
+						+ segA.getDeptime());
+
+				flightDetail.setDepdate(tmpDate);
+				List<String> flightNo = new ArrayList<String>();
+				flightNo.add(segA.getFlightno());
+				flightDetail.setFlightno(flightNo);
+				flightDetail.setMonetaryunit(flightACur.get(iter.getKey()));
+				flightDetail.setPrice(amountWithoutTax.get(iter.getKey()));
+				flightDetail.setTax(iter.getValue()
+						- amountWithoutTax.get(iter.getKey()));
 				flightDetail.setWrapperid(param.getWrapperid());
-				flight.setDetail(flightDetail);
-				flight.setInfo(segs);
-				flightList.add(flight);
+
+				flightInfo.setDetail(flightDetail);
+				flightInfo.setInfo(segs);
+
+				flightInfo.setOutboundPrice(flightAWithoutPrice.get(iter
+						.getKey()));
+
+				tmpDate = dateFormat.parse(segB.getDepDate() + " "
+						+ segB.getDeptime());
+
+				flightInfo.setRetdepdate(tmpDate);
+
+				List<String> retFlightNo = new ArrayList<String>();
+				retFlightNo.add(segB.getFlightno());
+				flightInfo.setRetflightno(retFlightNo);
+
+				flightInfo.setRetinfo(segsRet);
+				flightInfo.setReturnedPrice(flightBWithoutPrice.get(iter
+						.getKey()));
+
+				flightList.add(flightInfo);
 			}
+
 			result.setRet(true);
 			result.setStatus(Constants.SUCCESS);
 			result.setData(flightList);
-
 		} catch (Exception e) {
 			e.printStackTrace();
 			result.setRet(false);
